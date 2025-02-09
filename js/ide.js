@@ -1,4 +1,4 @@
-import { usePuter } from "./puter.js";
+import { IS_PUTER } from "./puter.js";
 
 const API_KEY = ""; // Get yours at https://platform.sulu.sh/apis/judge0
 
@@ -83,12 +83,146 @@ var layoutConfig = {
                 componentState: {
                     readOnly: true
                 }
-            }]
+            }, // ai chat
+               {
+                type: "component",
+                componentName: "chat",
+                title: "AI Assistant",
+                width: 30
+  
+            }
+            // ai chat
+            ]
         }]
-    }]
+    }]  
 };
-
+    
+    
 var gPuterFile;
+
+// ai chat
+layout.registerComponent("chat", function(container) {
+    container.getElement().html(`
+        <div id="chat-messages" style="height: 80%; overflow-y: auto;"></div>
+        <input id="chat-input" type="text" style="width: 80%;">
+        <button id="chat-send">Send</button>
+    `);
+});
+
+let chatMessages = [];
+
+//const GROQ_API_KEY = "";
+const GROQ_API_KEY = env.process.GROQ_API_KEY;
+
+async function callGroqAPI(message, systemPrompt = "") {
+    const response = await fetch("https://api.groq.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${GROQ_API_KEY}`, // "Authorization": `Bearer ${env.process.GROQ_API_KEY}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: "mixtral-8x7b-32768",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: message }
+            ]
+        })
+    });
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+
+async function sendChatMessage() {
+    const input = $("#chat-input");
+    const message = input.val();
+    input.val("");
+    
+    chatMessages.push({ role: "user", content: message });
+    updateChatUI();
+    
+    const response = await callGroqAPI(message);
+    chatMessages.push({ role: "assistant", content: response });
+    updateChatUI();
+}
+
+function updateChatUI() {
+    const chatMessagesElement = $("#chat-messages");
+    chatMessagesElement.html("");
+    for (const message of chatMessages) {
+        chatMessagesElement.append(`<p><strong>${message.role}:</strong> ${message.content}</p>`);
+    }
+    chatMessagesElement.scrollTop(chatMessagesElement[0].scrollHeight);
+}
+
+// Add this to your document ready function
+$("#chat-send").click(sendChatMessage);
+$("#chat-input").keypress(function(e) {
+    if (e.which == 13) sendChatMessage();
+});
+
+async function suggestFix(compileOutput) {
+    const code = sourceEditor.getValue();
+    const prompt = `The following code failed to compile. Here's the error message:\n\n${compileOutput}\n\nPlease suggest a fix for this code:\n\n${code}`;
+    
+    const suggestion = await callGroqAPI(prompt, "You are an expert programmer. Provide a concise fix for the compilation error.");
+    
+    chatMessages.push({ role: "assistant", content: `Compilation failed. Here's a suggested fix:\n\n${suggestion}` });
+    updateChatUI();
+}
+
+
+
+
+function enableInlineCodeChat() {
+    sourceEditor.onMouseUp((event) => {
+        const selection = sourceEditor.getSelection();
+        if (!selection.isEmpty()) {
+            const selectedText = sourceEditor.getModel().getValueInRange(selection);
+            showInlineChatPopup(selectedText, selection);
+        }
+    });
+}
+
+function showInlineChatPopup(selectedCode, selection) {
+    const { startLineNumber, startColumn, endLineNumber, endColumn } = selection;
+    const widget = document.createElement('div');
+    widget.className = 'inline-chat-widget';
+    widget.innerHTML = `
+        <textarea placeholder="Ask about this code..."></textarea>
+        <button>Ask AI</button>
+    `;
+    
+    const lineHeight = sourceEditor.getOption(monaco.editor.EditorOption.lineHeight);
+    const { top, left } = sourceEditor.getLayoutInfo();
+    
+    widget.style.position = 'absolute';
+    widget.style.top = `${top + lineHeight * endLineNumber}px`;
+    widget.style.left = `${left}px`;
+    
+    document.body.appendChild(widget);
+    
+    widget.querySelector('button').onclick = async () => {
+        const question = widget.querySelector('textarea').value;
+        const response = await callGroqAPI(`Code: ${selectedCode}\n\nQuestion: ${question}`);
+        showInlineChatResponse(response, widget);
+    };
+}
+
+function showInlineChatResponse(response, widget) {
+    const responseElem = document.createElement('div');
+    responseElem.className = 'inline-chat-response';
+    responseElem.textContent = response;
+    widget.appendChild(responseElem);
+}
+
+// Call this function after initializing the sourceEditor
+enableInlineCodeChat();
+
+
+
+// ai chat
 
 function encode(str) {
     return btoa(unescape(encodeURIComponent(str || "")));
@@ -125,7 +259,7 @@ function showHttpError(jqXHR) {
 
 function handleRunError(jqXHR) {
     showHttpError(jqXHR);
-    $runBtn.removeClass("loading");
+    $runBtn.removeClass("disabled");
 
     window.top.postMessage(JSON.parse(JSON.stringify({
         event: "runError",
@@ -149,7 +283,7 @@ function handleResult(data) {
 
     stdoutEditor.setValue(output);
 
-    $runBtn.removeClass("loading");
+    $runBtn.removeClass("disabled");
 
     window.top.postMessage(JSON.parse(JSON.stringify({
         event: "postExecution",
@@ -177,7 +311,7 @@ function run() {
         showError("Error", "Source code can't be empty!");
         return;
     } else {
-        $runBtn.addClass("loading");
+        $runBtn.addClass("disabled");
     }
 
     stdoutEditor.setValue("");
@@ -230,6 +364,17 @@ function run() {
                 let region = request.getResponseHeader('X-Judge0-Region');
                 setTimeout(fetchSubmission.bind(null, flavor, region, data.token, 1), INITIAL_WAIT_TIME_MS);
             },
+            
+
+            // ai chat
+            success: function(data) {
+                if (data.status.id === 6) { // Compilation error
+                    suggestFix(data.compile_output);
+                }
+            },
+            // ai chat
+
+
             error: handleRunError
         });
     }
@@ -309,7 +454,7 @@ function saveFile(content, filename) {
 }
 
 async function openAction() {
-    if (usePuter()) {
+    if (IS_PUTER) {
         gPuterFile = await puter.ui.showOpenFilePicker();
         openFile(await (await gPuterFile.read()).text(), gPuterFile.name);
     } else {
@@ -318,7 +463,7 @@ async function openAction() {
 }
 
 async function saveAction() {
-    if (usePuter()) {
+    if (IS_PUTER) {
         if (gPuterFile) {
             gPuterFile.write(sourceEditor.getValue());
         } else {
@@ -513,11 +658,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     break;
                 case "s": // Ctrl+S, Cmd+S
                     e.preventDefault();
-                    saveAction();
+                    save();
                     break;
                 case "o": // Ctrl+O, Cmd+O
                     e.preventDefault();
-                    openAction();
+                    open();
                     break;
                 case "+": // Ctrl+Plus
                 case "=": // Some layouts use '=' for '+'
@@ -605,7 +750,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         e.innerText = `${superKey}${e.innerText}`;
     });
 
-    if (usePuter()) {
+    if (IS_PUTER) {
         puter.ui.onLaunchedWithItems(async function (items) {
             gPuterFile = items[0];
             openFile(await (await gPuterFile.read()).text(), gPuterFile.name);
@@ -844,3 +989,7 @@ const EXTENSIONS_TABLE = {
 function getLanguageForExtension(extension) {
     return EXTENSIONS_TABLE[extension] || { "flavor": CE, "language_id": 43 }; // Plain Text (https://ce.judge0.com/languages/43)
 }
+
+
+
+

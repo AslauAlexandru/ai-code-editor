@@ -1,6 +1,6 @@
 # Week 12 Headstarter Accelerator Project 12 AI Code Editor 
 ## Project statement
-*I have not done the challenges.*
+*I have not done the challenges.* AI Code Editor is the same thing as Codex (AI Code Editor or Codex is the same thing).
 
 AI Code Editor.
 For this project, you are tasked with building an AI Code Editor using the Judge0 IDE repo.

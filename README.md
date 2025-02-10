@@ -1,5 +1,6 @@
 # Week 12 Headstarter Accelerator Project 12 AI Code Editor 
 ## Project statement
+*I have not done the challenges.*
 
 AI Code Editor.
 For this project, you are tasked with building an AI Code Editor using the Judge0 IDE repo.

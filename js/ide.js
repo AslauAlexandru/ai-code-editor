@@ -11,6 +11,9 @@ const EXTRA_CE = "EXTRA_CE";
 
 const AUTHENTICATED_CE_BASE_URL = "https://judge0-ce.p.sulu.sh";
 const AUTHENTICATED_EXTRA_CE_BASE_URL = "https://judge0-extra-ce.p.sulu.sh";
+//const AUTHENTICATED_CE_BASE_URL = "";
+//const AUTHENTICATED_EXTRA_CE_BASE_URL = "";
+
 
 var AUTHENTICATED_BASE_URL = {};
 AUTHENTICATED_BASE_URL[CE] = AUTHENTICATED_CE_BASE_URL;
@@ -18,6 +21,8 @@ AUTHENTICATED_BASE_URL[EXTRA_CE] = AUTHENTICATED_EXTRA_CE_BASE_URL;
 
 const UNAUTHENTICATED_CE_BASE_URL = "https://ce.judge0.com";
 const UNAUTHENTICATED_EXTRA_CE_BASE_URL = "https://extra-ce.judge0.com";
+//const UNAUTHENTICATED_CE_BASE_URL = "";
+//const UNAUTHENTICATED_EXTRA_CE_BASE_URL = "";
 
 var UNAUTHENTICATED_BASE_URL = {};
 UNAUTHENTICATED_BASE_URL[CE] = UNAUTHENTICATED_CE_BASE_URL;
@@ -114,7 +119,7 @@ let chatMessages = [];
 //const GROQ_API_KEY = "";
 const GROQ_API_KEY = env.process.GROQ_API_KEY;
 
-async function callGroqAPI(message, systemPrompt = "") {
+async function callGroqAPI(message, systemPrompt ="") {
     const response = await fetch("https://api.groq.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -250,6 +255,7 @@ function showError(title, content) {
     );
 
     $("#report-problem-btn").attr("href", `https://github.com/judge0/ide/issues/new?title=${reportTitle}&body=${reportBody}`);
+    //$("#report-problem-btn").attr("href", `https://github.com/AslauAlexandru/ai-code-editor/issues/new?title=${reportTitle}&body=${reportBody}`);
     $("#judge0-site-modal").modal("show");
 }
 
@@ -282,6 +288,13 @@ function handleResult(data) {
     const output = [compileOutput, stdout].join("\n").trim();
 
     stdoutEditor.setValue(output);
+
+     // ai chat 
+    if (data.status.id === 6) { // Compilation error
+            suggestFix(data.compile_output);
+    }
+
+    // ai chat
 
     $runBtn.removeClass("disabled");
 
@@ -365,7 +378,8 @@ function run() {
                 setTimeout(fetchSubmission.bind(null, flavor, region, data.token, 1), INITIAL_WAIT_TIME_MS);
             },
             
-
+            /** 
+            // Is not mandatory to put here
             // ai chat
             success: function(data) {
                 if (data.status.id === 6) { // Compilation error
@@ -373,7 +387,7 @@ function run() {
                 }
             },
             // ai chat
-
+            */
 
             error: handleRunError
         });
@@ -727,6 +741,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
         });
+
+        // ai chat
+        layout.registerComponent("chat", function(container) {
+            container.getElement().html(`
+                <div id="chat-messages" style="height: 80%; overflow-y: auto;"></div>
+                <input id="chat-input" type="text" style="width: 80%;">
+                <button id="chat-send">Send</button>
+            `);
+        });
+        
+
+        // ai chat
 
         layout.on("initialised", function () {
             setDefaults();

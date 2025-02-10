@@ -15,9 +15,7 @@ For this project, imagine you are an engineer at a startup looking to compete wi
 **Project Requirements:**
 
 - ​Add a chat interface for users to ask questions and get answers - see 36:11 in the Project Walkthrough video posted above
-  
 ​- If a user's code doesn't compile, use AI to suggest a fix
-
 - ​Let the user select a segment of code and chat with it inline - see 1:09:03 in the Project Walkthrough video posted above
 
 **Challenges:**

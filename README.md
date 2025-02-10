@@ -8,8 +8,8 @@ For this project, imagine you are an engineer at a startup looking to compete wi
 
 **Getting Started:**
 
-- Clone the Judge0 IDE repo here https://github.com/judge0/ide
-- Run the code locally with the command python3 -m http.server 8000
+- Clone the Judge0 IDE repo [here]( https://github.com/judge0/ide)
+- Run the code locally with the command python3 -m http.server 8000 (also in vs code you can install Live Server Ritwick Dey, after open ai-code-editor\embed\index.html in vs code and click Go Live)  
 - Make edits to the relevant files to fulfill the requirements below
 
 **Project Requirements:**
@@ -28,26 +28,26 @@ For this project, imagine you are an engineer at a startup looking to compete wi
 
 **Resources:**
 
-Judge0:
-https://judge0.com/
+[Judge0](
+https://judge0.com/)
 
-Judge0 IDE:
-https://github.com/judge0/ide
+[Judge0 IDE](
+https://github.com/judge0/ide)
 
-Cursor Prompt Design:
-https://www.cursor.com/blog/prompt-design
+[Cursor Prompt Design](
+https://www.cursor.com/blog/prompt-design)
 
-Cursor Team Podcast:
-https://www.youtube.com/watch?v=oFfVt3S51T4
+[Cursor Team Podcast](
+https://www.youtube.com/watch?v=oFfVt3S51T4)
 
-Open Source AI Assistant:
-https://github.com/continuedev/continue
+[Open Source AI Assistant](
+https://github.com/continuedev/continue)
 
-Open Source AI Code Editor:
-https://github.com/trypear/pearai-app
+[Open Source AI Code Editor](
+https://github.com/trypear/pearai-app)
 
-Free API for DeekSeek R-1:
-https://openrouter.ai/deepseek/deepseek-r1:free
+[Free API for DeekSeek R-1](
+https://openrouter.ai/deepseek/deepseek-r1:free)
 
 
 
